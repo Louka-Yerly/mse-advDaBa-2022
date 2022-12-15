@@ -1,0 +1,2 @@
+docker rm /advDBlab2
+docker run -it --name advDBlab2 -p7474:7474 -p7687:7687 -v $PWD/neo4j_mount/data:/data -v $PWD/neo4j_mount/conf:/conf -v $PWD/neo4j_mount/logs:/logs --memory="4g" --env NEO4J_AUTH=neo4j/test neo4j:4.4.15-community

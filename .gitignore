@@ -1,0 +1,14 @@
+.idea/
+.vscode/
+
+neo4j_mount/data
+neo4j_mount/logs
+
+dblp.v13.7z
+dblpv13.json
+dblpv13_clean.json
+dblp_clean.json
+dblpExample_clean.json
+
+target/
+advDB.iml
