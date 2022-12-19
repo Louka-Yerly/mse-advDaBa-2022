@@ -11,6 +11,8 @@ public class Article {
     private List<Author> authors;
     private List<String> references;
 
+    private static final int TITLE_MAX_LENGTH = 20;
+
     private Map<String, Object> objectMap;
 
     public String get_id(){
@@ -32,7 +34,7 @@ public class Article {
     public void createObjectMap() {
         objectMap = new HashMap<>();
         objectMap.put("_id", _id);
-        objectMap.put("title", title);
+        objectMap.put("title", title.substring(0, Integer.min(title.length(),TITLE_MAX_LENGTH)));
 
         if(authors != null) {
             List<Map<String, Object>> authorsMapList = new ArrayList<>(authors.size());

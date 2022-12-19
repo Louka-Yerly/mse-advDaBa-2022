@@ -18,18 +18,50 @@ public class TP2Main {
 
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        //String jsonPath = System.getenv("JSON_FILE");
-        String jsonPath = "D:\\Louka\\MSE\\AdvDaBa\\mse-advDaBa-2022\\dblpv13.json";
-        String jsonCleanPath = "D:\\Louka\\MSE\\AdvDaBa\\mse-advDaBa-2022\\dblpv13_clean.json";
-
-        System.out.println("Path to JSON file is " + jsonPath);
-        int nbArticles = 10000;//Integer.max(1000,Integer.parseInt(System.getenv("MAX_NODES")));
-        int nbAriclePerRead = 1000;
-        System.out.println("Number of articles to consider is " + nbArticles);
-        String neo4jIP = "localhost"; //System.getenv("NEO4J_IP");
-        System.out.println("IP address of neo4j server is " + neo4jIP);
 
         int nbInserterThread = 1;
+
+        String jsonPath = System.getenv("JSON_FILE");
+        if(jsonPath == null) {
+            // run on host
+            jsonPath = "D:\\Louka\\MSE\\AdvDaBa\\mse-advDaBa-2022\\dblpv13.json";
+        }
+        System.out.println("Path to JSON file is " + jsonPath);
+
+        String jsonCleanPath = System.getenv("JSON_CLEAN_FILE");
+        if(jsonCleanPath == null) {
+            //run on host
+            jsonCleanPath = "D:\\Louka\\MSE\\AdvDaBa\\mse-advDaBa-2022\\dblpv13_clean.json";
+        }
+        System.out.println("Path to JSON clean file is " + jsonCleanPath);
+
+        int nbArticles;
+        try {
+            nbArticles = Integer.max(1000,Integer.parseInt(System.getenv("MAX_NODES")));
+        } catch(NumberFormatException nfe) {
+            // run on host
+            nbArticles = 10000;
+        }
+        System.out.println("Number of articles to consider is " + nbArticles);
+
+        int nbAriclePerRead;
+        try {
+            nbAriclePerRead = Integer.max(1,Integer.parseInt(System.getenv("NODES_PER_READ")));
+        } catch(NumberFormatException nfe) {
+            // run on host
+            nbAriclePerRead = 100;
+        }
+        System.out.println("Nodes batch size is " + nbAriclePerRead);
+
+
+
+
+        String neo4jIP = System.getenv("NEO4J_IP");
+        if(neo4jIP == null) {
+            // run on host
+            neo4jIP = "localhost";
+        }
+        System.out.println("IP address of neo4j server is " + neo4jIP);
 
 
         Driver driver = GraphDatabase.driver("bolt://" + neo4jIP + ":" + PORT, AuthTokens.basic(USERNAME, PASSWORD));
@@ -49,7 +81,7 @@ public class TP2Main {
         } while(!connected);
 
         System.out.println("Connected to the database...\n Start inserting elements");
-        Inserter.createConstraintAndIndex(driver);
+        //Inserter.createConstraintAndIndex(driver);
 
         /*
         Replacer replacer = new Replacer(jsonPath, jsonCleanPath);

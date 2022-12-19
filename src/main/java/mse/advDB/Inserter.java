@@ -32,27 +32,26 @@ public class Inserter implements Runnable {
     }
 
     public void insertArticle(List<Article> articles) {
-        /*
-        String query = "UNWIND $papers AS article" +
-                               "CREATE (n:ARTICLE {_id: $id, }) " +
-                               "SET n = properties";
-         */
+        System.out.println("\tInsert new batch of length: "  + articles.size());
+        List<Map<String, Object>> articles_list = new ArrayList<>();
+        for(Article ar:articles) {
+            articles_list.add(ar.objectMap());
+        }
+        Map<String, Object> articles_map = new HashMap<>();
+        articles_map.put("articles", articles_list);
         try (Session session = driver.session(SessionConfig.defaultConfig())) {
             session.writeTransaction(tx -> {
-                for(Article article : articles){
-                    Map<String, Object>  data = article.objectMap();
-
-                    tx.run(new Query(  "MERGE (a:ARTICLE {_id:$_id}) " +
-                                            "SET a.title = $title " +
-                                            "WITH a UNWIND $authors as ath " +
-                                            "MERGE (b:AUTHOR {_id:ath._id}) " +
-                                            "SET b.name = ath.name " +
-                                            "MERGE (b)-[:AUTHORED]->(a) " +
-                                            "WITH a UNWIND $references as ref " +
-                                            "MERGE (r:ARTICLE {_id:ref}) " +
-                                            "MERGE (a)-[:CITES]->(r) ",
-                                            data));
-                }
+                tx.run(new Query(   "UNWIND $articles as ar " +
+                                        "MERGE (a:ARTICLE {_id:ar._id}) " +
+                                        "SET a.title = ar.title " +
+                                        "WITH ar, a UNWIND ar.authors as ath " +
+                                        "MERGE (b:AUTHOR {_id:ath._id}) " +
+                                        "SET b.name = ath.name " +
+                                        "MERGE (b)-[:AUTHORED]->(a) " +
+                                        "WITH ar, a UNWIND ar.references as ref " +
+                                        "MERGE (r:ARTICLE {_id:ref}) " +
+                                        "MERGE (a)-[:CITES]->(r) ",
+                                        articles_map));
 
                 return 1;
             });
@@ -60,8 +59,6 @@ public class Inserter implements Runnable {
     }
 
     public static void createConstraintAndIndex(Driver driver) {
-        //CREATE CONSTRAINT ON (movie:Movie) ASSERT movie.title IS UNIQUE
-        //CREATE INDEX ON :Actor(name)
         try (Session session = driver.session(SessionConfig.defaultConfig())) {
             session.writeTransaction(tx -> {
                 try{
@@ -70,6 +67,7 @@ public class Inserter implements Runnable {
                     //tx.run("CREATE INDEX ON :ARTICLE(_id)");
                     //tx.run("CREATE INDEX ON :AUTHOR(_id)");
                 } catch(ClientException ignored) {
+                    // the index is already created
                     tx.rollback();
                 }
                 return 1;
@@ -96,7 +94,7 @@ public class Inserter implements Runnable {
             } catch(NullPointerException ignored) {
                 try{
                     stopped_times++;
-                    insertArticle(Objects.requireNonNull(queue.poll(1, TimeUnit.SECONDS)));
+                    insertArticle(Objects.requireNonNull(queue.poll(10, TimeUnit.SECONDS)));
                 } catch(InterruptedException e){
                     e.printStackTrace();
                 }
@@ -114,25 +112,3 @@ public class Inserter implements Runnable {
         System.out.println("Insert (" + Thread.currentThread().getName() +") has been stopped: " + stopped_times);
     }
 }
-// "CREATE (:ARTICLE {_id:'test', title:'test'})"
-                /*
-                Map<String, Object>  data = new HashMap<>();
-                data.put("_id", articles.get(0).get_id());
-                Query q = new Query("CREATE (:ARTICLE {_id:$_id})", data);
-                tx.run(q);
-                tx.run("CREATE (:ARTICLE {name:'test2'})");
-                return 1;
-                 */
-
-/**
- * Map<String,Object> props = new HashMap<>();
- * props.put( "name", "Andy" );
- * props.put( "position", "Developer" );
- *
- * Map<String,Object> params = new HashMap<>();
- * params.put( "props", props );
- *
- * String query = "CREATE ($props)";
- *
- * transaction.execute( query, params );
- */
