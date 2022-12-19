@@ -81,7 +81,7 @@ public class TP2Main {
         } while(!connected);
 
         System.out.println("Connected to the database...\n Start inserting elements");
-        //Inserter.createConstraintAndIndex(driver);
+        Inserter.createConstraintAndIndex(driver);
 
         /*
         Replacer replacer = new Replacer(jsonPath, jsonCleanPath);
