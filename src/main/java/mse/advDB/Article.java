@@ -37,21 +37,21 @@ public class Article {
         objectMap.put("title", title.substring(0, Integer.min(title.length(),TITLE_MAX_LENGTH)));
 
         if(authors != null) {
-            List<Map<String, Object>> authorsMapList = new ArrayList<>(authors.size());
+            List<String> authorsMapList = new ArrayList<>(authors.size());
             for(Author author: authors) {
-                authorsMapList.add(author.toMap());
+                authorsMapList.add(author.get_id());
             }
             objectMap.put("authors", authorsMapList);
         } else{
-            List<Map<String, Object>> al = new ArrayList<>(1);
-            Map<String, Object> temp = new HashMap<>();
-            temp.put("_id", "");
-            temp.put("name", "");
-            al.add(temp);
+            List<String> al = new ArrayList<>(1);
+            al.add("");
             objectMap.put("authors", al);
         }
 
         if(references != null) {
+            List<String> emptyString = new ArrayList<>();
+            emptyString.add("");
+            references.removeAll(emptyString);
             List<Map<String, Object>> refs = new ArrayList<>(references.size());
             objectMap.put("references", references);
         } else {

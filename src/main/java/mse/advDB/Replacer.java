@@ -24,7 +24,10 @@ public class Replacer implements Runnable {
     public void replace() {
         FileReader fr;
         FileWriter writer = null;
+        File file = new File(this.dst);
+
         try{
+            file.createNewFile();
             writer = new FileWriter(this.dst);
         } catch(IOException e){
             e.printStackTrace();

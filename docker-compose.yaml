@@ -11,12 +11,13 @@ services:
       - $PWD/neo4j_mount/data:/data
       - $PWD/neo4j_mount/logs:/logs
       - $PWD/neo4j_mount/conf:/conf
+      - $PWD/neo4j_mount/plugins:/plugins
     environment:
       - NEO4J_AUTH=neo4j/test
     deploy:
       resources:
         limits:
-          memory: 2g
+          memory: 3g
 
   app:
     image: neo4jtp:latest
@@ -26,17 +27,16 @@ services:
       - internal
     volumes:
       - $PWD/dblpv13.json:/file.json
-      - $PWD/dblpv13_clean.json:/file_clean.json
     environment:
       - JSON_FILE=/file.json
       - JSON_CLEAN_FILE=/file_clean.json
-      - MAX_NODES=1000
+      - MAX_NODES=100000
       - NEO4J_IP=172.24.0.10 # must be the same as above
-      - NODES_PER_READ=100
+      - NODES_PER_READ=1000
     deploy:
       resources:
         limits:
-          memory: 2g
+          memory: 3g
 
 networks:
   internal:

@@ -6,8 +6,7 @@ import com.google.gson.Gson;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 
 public class ObjectCutter implements Runnable {
@@ -17,16 +16,20 @@ public class ObjectCutter implements Runnable {
     private final int numberOfArticle;
     private final JsonReader reader;
 
-    private final BlockingQueue<List<Article>> queue;
+    private final BlockingQueue<List<Article>> queueArticle;
+    private final BlockingQueue<Set<Author>> queueAuthor;
+    private final Set<Author> authorSet = new HashSet<>();
 
-    public ObjectCutter(String filename, int numberOfArticlePerRead, int numberOfArticle, BlockingQueue<List<Article>> queue) throws IOException{
+    public ObjectCutter(String filename, int numberOfArticlePerRead, int numberOfArticle,
+                        BlockingQueue<List<Article>> queueArticle, BlockingQueue<Set<Author>> queueAuthor) throws IOException{
         this.numberOfArticlePerRead = numberOfArticlePerRead;
         this.numberOfArticle = numberOfArticle;
         InputStream inputStream = Files.newInputStream(Path.of(filename));
         reader = new JsonReader(new InputStreamReader(inputStream));
         reader.beginArray();
 
-        this.queue = queue;
+        this.queueArticle = queueArticle;
+        this.queueAuthor = queueAuthor;
     }
 
     public List<Article> getNextArticles() {
@@ -43,6 +46,10 @@ public class ObjectCutter implements Runnable {
             Article a = new Gson().fromJson(reader, Article.class);
             a.createObjectMap();
             res.add(a);
+            if(a.getAuthors() != null) {
+                authorSet.addAll(a.getAuthors());
+            }
+
         }
         return res;
     }
@@ -53,21 +60,14 @@ public class ObjectCutter implements Runnable {
 
     @Override
     public void run(){
-        int stopped_times = 0;
         for(int i=0; i<numberOfArticle/numberOfArticlePerRead && hasMoreArticles(); i++) {
             List<Article> ar = getNextArticles();
-
-            try {
-                queue.add(ar);
-            } catch(IllegalStateException ise) {
-                stopped_times++;
-                try{
-                    queue.put(ar);
-                } catch(InterruptedException e){
-                    e.printStackTrace();
-                }
+            try{
+                queueArticle.put(ar);
+            } catch(InterruptedException e){
+                e.printStackTrace();
             }
         }
-        System.out.println("ObjectCutter has been stopped: " + stopped_times);
+        queueAuthor.add(authorSet);
     }
 }

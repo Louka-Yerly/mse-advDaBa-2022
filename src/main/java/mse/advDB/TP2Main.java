@@ -7,6 +7,7 @@ import org.neo4j.driver.GraphDatabase;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -19,8 +20,6 @@ public class TP2Main {
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
-        int nbInserterThread = 1;
-
         String jsonPath = System.getenv("JSON_FILE");
         if(jsonPath == null) {
             // run on host
@@ -30,7 +29,7 @@ public class TP2Main {
 
         String jsonCleanPath = System.getenv("JSON_CLEAN_FILE");
         if(jsonCleanPath == null) {
-            //run on host
+            // run on host
             jsonCleanPath = "D:\\Louka\\MSE\\AdvDaBa\\mse-advDaBa-2022\\dblpv13_clean.json";
         }
         System.out.println("Path to JSON clean file is " + jsonCleanPath);
@@ -40,18 +39,18 @@ public class TP2Main {
             nbArticles = Integer.max(1000,Integer.parseInt(System.getenv("MAX_NODES")));
         } catch(NumberFormatException nfe) {
             // run on host
-            nbArticles = 10000;
+            nbArticles = 100000;
         }
         System.out.println("Number of articles to consider is " + nbArticles);
 
-        int nbAriclePerRead;
+        int batchSize;
         try {
-            nbAriclePerRead = Integer.max(1,Integer.parseInt(System.getenv("NODES_PER_READ")));
+            batchSize = Integer.max(1,Integer.parseInt(System.getenv("NODES_PER_READ")));
         } catch(NumberFormatException nfe) {
             // run on host
-            nbAriclePerRead = 100;
+            batchSize = 1000;
         }
-        System.out.println("Nodes batch size is " + nbAriclePerRead);
+        System.out.println("Nodes batch size is " + batchSize);
 
 
 
@@ -65,6 +64,13 @@ public class TP2Main {
 
 
         Driver driver = GraphDatabase.driver("bolt://" + neo4jIP + ":" + PORT, AuthTokens.basic(USERNAME, PASSWORD));
+
+        Replacer replacer = new Replacer(jsonPath, jsonCleanPath);
+        Thread replacerThread = new Thread(replacer);
+        //replacerThread.setPriority(Thread.MAX_PRIORITY);
+        replacerThread.start();
+        // let time to replacer to start the replacement job
+        Thread.sleep(1000);
 
         boolean connected = false;
         do {
@@ -80,61 +86,32 @@ public class TP2Main {
             }
         } while(!connected);
 
-        System.out.println("Connected to the database...\n Start inserting elements");
+        System.out.println("Connected to the database...");
         Inserter.createConstraintAndIndex(driver);
 
-        /*
-        Replacer replacer = new Replacer(jsonPath, jsonCleanPath);
-        Thread replacerThread = new Thread(replacer);
-        replacerThread.setPriority(Thread.MAX_PRIORITY);
-        replacerThread.start();
-        // let time to replacer to start the replacement job
-        Thread.sleep(10000);
-        */
 
         BlockingQueue<List<Article>> queue = new ArrayBlockingQueue<>(1);
-        ObjectCutter cutter = new ObjectCutter(jsonCleanPath, nbAriclePerRead, nbArticles, queue);
-        Inserter[] inserters = new Inserter[nbInserterThread];
-        for(int i=0; i<nbInserterThread; i++) {
-            inserters[i] = new Inserter(queue, driver);
-        }
+        BlockingQueue<Set<Author>> authorQueue = new ArrayBlockingQueue<>(1);
+        ObjectCutter cutter = new ObjectCutter(jsonCleanPath, batchSize, nbArticles, queue, authorQueue);
+        Inserter inserter = new Inserter(queue, authorQueue, driver, batchSize);
+
 
         Thread cutterThread = new Thread(cutter);
-        Thread[] inserterThreads = new Thread[nbInserterThread];
-        for(int i=0; i<nbInserterThread; i++) {
-            inserterThreads[i] = new Thread(inserters[i]);
-            inserterThreads[i].start();
-        }
+        Thread inserterThread = new Thread(inserter);
         long start = System.currentTimeMillis();
         cutterThread.start();
-
-
-
-        /*
-        int i=1;
-        long waiting_time = 1000;
-        while(cutterThread.getState() != Thread.State.TERMINATED) {
-            Thread.sleep(waiting_time);
-            System.out.print("\rWaiting since: " + waiting_time/1000*i++ + " seconds");
-        }
-        System.out.println();
-        */
-
+        inserterThread.start();
 
 
         cutterThread.join();
-        for(Inserter inserter : inserters) {
-            inserter.noMoreData();
-        }
-        //replacer.stopReplace();
-        for(Thread t: inserterThreads) {
-            t.join();
-        }
+        inserter.noMoreData();
+        replacer.stopReplace();
+        inserterThread.join();
         long stop = System.currentTimeMillis();
 
         System.out.println("Elapsed time: " + (stop-start)/1000.0 + " (seconds)");
 
-        //replacerThread.join();
+        replacerThread.join();
 
         Inserter.deleteEmptyNode(driver);
         driver.close();
