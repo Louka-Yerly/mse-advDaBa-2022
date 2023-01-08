@@ -34,6 +34,11 @@ public class Article {
     public void createObjectMap() {
         objectMap = new HashMap<>();
         objectMap.put("_id", _id);
+
+        if(title == null) {
+            title = "";
+        }
+
         objectMap.put("title", title.substring(0, Integer.min(title.length(),TITLE_MAX_LENGTH)));
 
         if(authors != null) {

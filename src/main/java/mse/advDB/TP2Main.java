@@ -67,15 +67,16 @@ public class TP2Main {
 
         Replacer replacer = new Replacer(jsonPath, jsonCleanPath);
         Thread replacerThread = new Thread(replacer);
-        //replacerThread.setPriority(Thread.MAX_PRIORITY);
+        replacerThread.setPriority(Thread.MAX_PRIORITY);
         replacerThread.start();
         // let time to replacer to start the replacement job
-        Thread.sleep(1000);
+        Thread.sleep(10000);
 
+        System.out.println("Sleeping a bit waiting for the db");
         boolean connected = false;
         do {
             try {
-                System.out.println("Sleeping a bit waiting for the db");
+                System.out.print("Sleeping a bit waiting for the db");
                 Thread.yield();
                 Thread.sleep(1000); // let some time for the neo4j container to be up and running
 
@@ -86,10 +87,11 @@ public class TP2Main {
             }
         } while(!connected);
 
-        System.out.println("Connected to the database...");
+        System.out.println("\nConnected to the database...");
         Inserter.createConstraintAndIndex(driver);
 
-
+        replacerThread.setPriority(Thread.NORM_PRIORITY);
+        
         BlockingQueue<List<Article>> queue = new ArrayBlockingQueue<>(1);
         BlockingQueue<Set<Author>> authorQueue = new ArrayBlockingQueue<>(1);
         ObjectCutter cutter = new ObjectCutter(jsonCleanPath, batchSize, nbArticles, queue, authorQueue);

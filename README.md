@@ -1,7 +1,8 @@
 # Report TP2
-
+Ce fichier fait office de rapport pour le TP2 sur neo4j: "Laboratory 2 – Diving deeper with Neo4j".
 
 # Implementation
+Les points ci-après explique la démarche utilisée pour ce travail pratique.
 
 ## Multithread pour l'insertion
 
@@ -37,7 +38,8 @@ relationships.
 ## Utilisation de APOC
 
 Afin d'opitmiser au mieux l'insertion, les best practices pour de grandes updates de la DB a été recherchées. Une 
-source du site neo4j s'est montrée particulièrement pertinante [(large update with ne004j)](https://neo4j.com/blog/nodes-2019-best-practices-to-make-large-updates-in-neo4j/).
+source du site neo4j s'est montrée particulièrement pertinante [(large update with neo4j)](https://neo4j.
+com/blog/nodes-2019-best-practices-to-make-large-updates-in-neo4j/).
 com/blog/nodes-2019-best-practices-to-make-large-updates-in-neo4j/].
 
 Cet article conseil l'utilisation de APOC. Ceci est en effet nécessaire pour les très grandes transactions. Dans mon 
@@ -48,13 +50,13 @@ variété de fonctionnalités qui vont au-delà de ce qui est disponible nativem
 
 Dans le cadre de ce projet, la fonction apoc.periodic.iterat() a été utilisée
 
-## Amélioration possible
+## Améliorations possibles
 
 
 Les améliorations listées ci-après pourraient être réalisées:
  - Réaliser le formatage du fichier dblpv13.json à la volée. Cela permettrait d'éviter des problèmes de 
-   synchronisation entre thread. De plus cela éviterait de devoir stocker un deuxième fichier de 17 GiB
- -
+   synchronisation entre thread. De plus cela éviterait de devoir stocker un deuxième fichier de 17 GiB.
+ - Insérer la DB en entier.
 
 # Conclusion
 
@@ -83,3 +85,23 @@ app_1  | [INFO] Total time:  02:24 min
 app_1  | [INFO] Finished at: 2023-01-08T17:02:06Z
 app_1  | [INFO] ------------------------------------------------------------------------
 ```
+
+D'autres tests ont également été réalisés:
+
+```json
+{
+  "test_1": {
+    "number_of_articles": 500000,
+    "memoryMB_db": 3000,
+    "memoryMB_app": 3000,
+    "seconds": 589.89
+  },
+  "test_2": {
+    "number_of_articles": 1000000,
+    "memoryMB_db": 3000,
+    "memoryMB_app": 3000,
+    "seconds": 1581.945
+  }
+}
+```
+
