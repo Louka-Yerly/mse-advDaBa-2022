@@ -65,18 +65,23 @@ public class TP2Main {
 
         Driver driver = GraphDatabase.driver("bolt://" + neo4jIP + ":" + PORT, AuthTokens.basic(USERNAME, PASSWORD));
 
+        long before = System.currentTimeMillis();
         Replacer replacer = new Replacer(jsonPath, jsonCleanPath);
-        Thread replacerThread = new Thread(replacer);
-        replacerThread.setPriority(Thread.MAX_PRIORITY);
-        replacerThread.start();
+        replacer.run();
+        long after = System.currentTimeMillis();
+        System.out.println("time: " + (after-before)/1000.0);
+        //Thread replacerThread = new Thread(replacer);
+        //replacerThread.setPriority(Thread.MAX_PRIORITY);
+        //replacerThread.start();
         // let time to replacer to start the replacement job
-        Thread.sleep(10000);
+        //Thread.sleep(10000);
 
         System.out.println("Sleeping a bit waiting for the db");
         boolean connected = false;
         do {
             try {
-                System.out.print("Sleeping a bit waiting for the db");
+                System.out.print(".");
+                System.out.flush();
                 Thread.yield();
                 Thread.sleep(1000); // let some time for the neo4j container to be up and running
 
@@ -90,7 +95,7 @@ public class TP2Main {
         System.out.println("\nConnected to the database...");
         Inserter.createConstraintAndIndex(driver);
 
-        replacerThread.setPriority(Thread.NORM_PRIORITY);
+        //replacerThread.setPriority(Thread.NORM_PRIORITY);
         
         BlockingQueue<List<Article>> queue = new ArrayBlockingQueue<>(1);
         BlockingQueue<Set<Author>> authorQueue = new ArrayBlockingQueue<>(1);
@@ -113,7 +118,7 @@ public class TP2Main {
 
         System.out.println("Elapsed time: " + (stop-start)/1000.0 + " (seconds)");
 
-        replacerThread.join();
+        //replacerThread.join();
 
         Inserter.deleteEmptyNode(driver);
         driver.close();

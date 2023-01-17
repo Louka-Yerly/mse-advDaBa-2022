@@ -27,10 +27,11 @@ services:
       - internal
     volumes:
       - $PWD/dblpv13.json:/file.json
+      - $PWD/dblpv13_clean.json=/file_clean.json
     environment:
       - JSON_FILE=/file.json
       - JSON_CLEAN_FILE=/file_clean.json
-      - MAX_NODES=100000
+      - MAX_NODES=500000
       - NEO4J_IP=172.24.0.10 # must be the same as above
       - NODES_PER_READ=1000
     deploy:

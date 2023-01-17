@@ -1,8 +1,13 @@
 package mse.advDB;
 
 import java.io.*;
+import java.util.regex.Pattern;
 
 public class Replacer implements Runnable {
+    private static final int NB_LINES = 1000;
+
+    private static final Pattern pattern = Pattern.compile("NumberInt[(]([0-9]*)[)]", Pattern.CASE_INSENSITIVE);
+
     private String src;
     private String dst;
 
@@ -44,20 +49,28 @@ public class Replacer implements Runnable {
         }
         br = new BufferedReader(fr);
 
+        StringBuilder lines = new StringBuilder();
         while(!needStopReplace()) {
-            String line = null;
             try{
-                line = br.readLine();
+                for(int i=0; i<NB_LINES; i++){
+                    String line = br.readLine();
+                    if(line == null) {
+                        // end of file
+                        stopReplace();
+                        break;
+                    }
+                    lines.append(line);
+                }
+
             } catch(IOException e){
                 e.printStackTrace();
-            }
-            if(line == null) {
-                // end of file
-                break;
+                continue;
             }
             while(true) {
                 try{
-                    writer.write(line.replaceAll("NumberInt[(]([0-9]*)[)]", "$1"));
+                    //writer.write(lines.replaceAll("NumberInt[(]([0-9]*)[)]", "$1"));
+                    writer.write((pattern.matcher(lines).replaceAll("$1")));
+                    lines.setLength(0);
                     break;
                 } catch(IOException e){
                     e.printStackTrace();
